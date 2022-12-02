@@ -167,7 +167,7 @@ sub _check_ustid_taxnumber_unique {
     my $clean_ustid     = SL::VATIDNr->clean($self->{cv}->ustid);
     my $clean_taxnumber = $do_clean_taxnumber->($self->{cv}->taxnumber);
 
-    if (!($clean_ustid || $clean_taxnumber)) {
+    if (!($clean_ustid || $clean_taxnumber) && $self->is_vendor()) {
       return t8('VAT ID and/or taxnumber must be given.');
 
     } else {
