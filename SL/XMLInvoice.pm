@@ -8,6 +8,9 @@ use Module::Load;
 use SL::Locale::String qw(t8);
 use XML::LibXML;
 
+require SL::XMLInvoice::UBL;
+require SL::XMLInvoice::CrossIndustryInvoice;
+
 use constant RES_OK => 0;
 use constant RES_XML_PARSING_FAILED => 1;
 use constant RES_UNKNOWN_ROOT_NODE_TYPE => 2;
