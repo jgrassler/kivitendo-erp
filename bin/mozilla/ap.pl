@@ -162,6 +162,9 @@ sub load_zugferd {
 
         my $net_total = $::form->format_amount(\%::myconfig, $item{'subtotal'}, 2);
         my $desc = $item{'description'};
+        my $quantity = $item{'quantity'};
+        my $vendor_partno = $item{'vendor_partno'};
+
         my $tax_rate = $item{'tax_rate'} / 100; # XML data is usually in percent
 
         my $active_taxkey = $default_ap_amount_chart->taxkey_id;
@@ -191,6 +194,9 @@ sub load_zugferd {
         $::form->{"AP_amount_chart_id_${row}"}          = $default_ap_amount_chart->id;
         $::form->{"previous_AP_amount_chart_id_${row}"} = $default_ap_amount_chart->id;
         $::form->{"amount_${row}"}                      = $net_total;
+        $::form->{"description_${row}"}                 = $desc;
+        $::form->{"quantity_${row}"}                    = $quantity;
+        $::form->{"vendor_partno_${row}"}               = $vendor_partno;
         $::form->{"taxchart_${row}"}                    = $tax->id . '--' . $tax->rate;
       }
 
@@ -201,6 +207,7 @@ sub load_zugferd {
       update(
         keep_rows_without_amount => 1,
         dont_add_new_row         => 1,
+        save_metadata            => 1,
       );
     }
 }
@@ -377,6 +384,7 @@ sub edit {
   # evaluated.
 
   my $form     = $main::form;
+  my %myconfig = %main::myconfig;
 
   $form->{title} = "Edit";
 
@@ -451,6 +459,7 @@ sub create_links {
   $form->{employee} = "$form->{employee}--$form->{employee_id}";
 
   AP->setup_form($form);
+  AP->load_metadata(\%myconfig, $form);
 
   $main::lxdebug->leave_sub();
 }
@@ -571,6 +580,7 @@ sub form_header {
 
     # format amounts
     $form->{"amount_$i"} = $form->format_amount(\%myconfig, $form->{"amount_$i"}, 2);
+    $form->{"quantity_$i"} = $form->format_amount(\%myconfig, $form->{"quantity_$i"}, 2);
     $form->{"tax_$i"} = $form->format_amount(\%myconfig, $form->{"tax_$i"}, 2);
 
     my ($default_taxchart, $taxchart_to_use);
@@ -729,6 +739,42 @@ sub show_draft {
   update();
 }
 
+sub save_metadata {
+  my %params = @_;
+
+  $main::lxdebug->enter_sub();
+
+  my $form     = $main::form;
+  my %myconfig = %main::myconfig;
+
+  $main::auth->assert('ap_transactions');
+
+  AP->post_save_metadata(\%myconfig, \%$form);
+  AP->load_metadata(\%myconfig, $form);
+
+  display_form();
+
+  $main::lxdebug->leave_sub();
+}
+
+sub update_zugferd {
+  my %params = @_;
+
+  $main::lxdebug->enter_sub();
+
+  my $form     = $main::form;
+  my %myconfig = %main::myconfig;
+
+  $main::auth->assert('ap_transactions');
+
+  AP->post_update_zugferd(\%myconfig, $form);
+
+  create_links();
+  display_form();
+
+  $main::lxdebug->leave_sub();
+}
+
 sub update {
   my %params = @_;
 
@@ -814,6 +860,11 @@ sub update {
      $form->{oldinvtotal});
   $form->{oldinvtotal}  = $form->{invtotal};
   $form->{oldtotalpaid} = $totalpaid;
+
+  if ( $params{save_metadata} == 1 ) {
+    AP->post_save_metadata(\%myconfig, \%$form);
+    AP->load_metadata(\%myconfig, $form);
+  }
 
   display_form();
 
@@ -1552,13 +1603,23 @@ sub setup_ap_display_form_action_bar {
 
   for my $bar ($::request->layout->get('actionbar')) {
     $bar->add(
-      action => [
-        t8('Update'),
-        submit    => [ '#form', { action => "update" } ],
-        id        => 'update_button',
-        checks    => [ 'kivi.validate_form' ],
-        accesskey => 'enter',
-        disabled  => !$may_edit_create ? t8('You must not change this AP transaction.') : undef,
+      combobox => [
+        action => [
+          t8('Update'),
+          submit    => [ '#form', { action => "update" } ],
+          id        => 'update_button',
+          checks    => [ 'kivi.validate_form' ],
+          accesskey => 'enter',
+          disabled  => !$may_edit_create ? t8('You must not change this AP transaction.') : undef,
+        ],
+        action => [ t8('Get metadata from attached XRechnung/ZUGFeRD document'),
+          submit   => [ '#form', { action => "update_zugferd" } ],
+          disabled => !$may_edit_create ? t8('You must not change this AP transaction.')
+                    : ($::form->{id} && $change_never)            ? t8('Changing invoices has been disabled in the configuration.')
+                    : ($::form->{id} && $change_on_same_day_only) ? t8('Invoices can only be changed on the day they are posted.')
+                    : !$::form->{id}    ? t8('This invoice has not been posted yet.')
+                    :                     undef,
+        ],
       ],
       combobox => [
         @post_entries,
@@ -1578,6 +1639,14 @@ sub setup_ap_display_form_action_bar {
                     : !$::form->{id}    ? t8('This invoice has not been posted yet.')
                     :                     undef,
           only_if  => $::instance_conf->get_is_show_mark_as_paid,
+        ],
+        action => [ t8('Save metadata'),
+          submit   => [ '#form', { action => "save_metadata" } ],
+          disabled => !$may_edit_create ? t8('You must not change this AP transaction.')
+                    : ($::form->{id} && $change_never)            ? t8('Changing invoices has been disabled in the configuration.')
+                    : ($::form->{id} && $change_on_same_day_only) ? t8('Invoices can only be changed on the day they are posted.')
+                    : !$::form->{id}    ? t8('This invoice has not been posted yet.')
+                    :                     undef,
         ],
       ], # end of combobox "Post"
 
