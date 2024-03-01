@@ -196,7 +196,6 @@ sub load_zugferd {
 
       flash('info', $::locale->text("The ZUGFeRD/Factur-X invoice '#1' has been loaded.", $file_name));
 
-      $::form->{form_validity_token} = SL::DB::ValidityToken->create(scope => SL::DB::ValidityToken::SCOPE_PURCHASE_INVOICE_POST())->token;
       $::form->{rowcount}         = $row;
 
       update(
