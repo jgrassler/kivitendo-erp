@@ -3200,6 +3200,7 @@ $self->{texts} = {
   'Shoporders'                  => 'Shopbestellungen',
   'Shops'                       => 'Webshops',
   'Short'                       => 'Knapp',
+  'Short name for DATEV export' => 'Kurzbezeichnung für DATEV-Export',
   'Should VAT ID or taxnumber be unique for all vendors? This is checked when saving a vendor\'s master data. One of the fields is sufficient and required.' => 'Soll die UStID oder Steuernummer eindeutig über alle Lieferanten sein? Dies wird beim Speichern von Lieferantenstammdaten geprüft. Eines dieser Felder reicht aus und muss angegeben sein.',
   'Should VAT ID or taxnumber be unique for customers? This is checked when saving a customer\'s master data. One of the fields is sufficient and required.' => 'Soll die UStID oder Steuernummer eindeutig über alle Kunden sein? Dies wird beim Speichern von Kundenstammdaten geprüft. Eines dieser Felder reicht aus und muss angegeben sein.',
   'Should ap transactions be and when should they be changeable or deleteable after posting?' => 'Sollen Kreditorenbuchungen nach der Buchung zu ändern oder zu löschen sein?',
