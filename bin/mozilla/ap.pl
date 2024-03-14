@@ -207,7 +207,6 @@ sub load_zugferd {
       update(
         keep_rows_without_amount => 1,
         dont_add_new_row         => 1,
-        save_metadata            => 1,
       );
     }
 }
