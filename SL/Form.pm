@@ -3336,6 +3336,10 @@ sub calculate_arap {
     $amount += $self->{"amount_$i"} * $sign;
   }
 
+  # Tax amounts that appear on bill (any bill items that do not have reverse
+  # charge tax keys)
+  my $bill_tax_total = 0;
+
   for my $i (1 .. $self->{rowcount}) {
     next unless $self->{"amount_$i"};
     ($self->{"tax_id_$i"}) = split /--/, $self->{"taxchart_$i"};
@@ -3343,25 +3347,38 @@ sub calculate_arap {
 
     my $selected_tax = SL::DB::Manager::Tax->find_by(id => "$tax_id");
 
-    if ( $selected_tax ) {
+    # Tax keys with VAT owed by the buyer. In these cases, there will be no VAT
+    # on the bill itself. It does not make sense to book the taxes against the
+    # AP account at this point, since they have not been paid, yet.
 
+    my %ap_exempt_taxkeys = (
+      18 => 1,  # Purchases from a different EU country at 7% VAT
+      19 => 1,  # Purchases from a different EU country at 19% VAT
+      94 => 1   # Purchases inside Germany with VAT owed by the buyer
+    );
+
+    if ( $selected_tax ) {
       if ( $buysell eq 'sell' ) {
         $self->{AR_amounts}{"tax_$i"} = $selected_tax->chart->accno if defined $selected_tax->chart;
       } else {
         $self->{AP_amounts}{"tax_$i"} = $selected_tax->chart->accno if defined $selected_tax->chart;
       };
-
-      $self->{"taxkey_$i"} = $selected_tax->taxkey;
+      $self->{"taxkey_$i"} = $selected_tax->taxkey unless $selected_tax;
       $self->{"taxrate_$i"} = $selected_tax->rate;
-    };
 
-    ($self->{"amount_$i"}, $self->{"tax_$i"}) = $self->calculate_tax($self->{"amount_$i"},$self->{"taxrate_$i"},$taxincluded,$roundplaces);
+      if ( ! $ap_exempt_taxkeys{$selected_tax->taxkey} ) {
+        ($self->{"amount_$i"}, $self->{"tax_$i"}) = $self->calculate_tax($self->{"amount_$i"},$self->{"taxrate_$i"},$taxincluded,$roundplaces);
+        $bill_tax_total += $self->{"tax_$i"};
+      } else { # do not add tax to money owed on bill for VAT exempt tax keys
+        $self->{"tax_$i"} = 0;
+      }
+      $total_tax  += $self->{"tax_$i"};
+    }
 
     $netamount  += $self->{"amount_$i"};
-    $total_tax  += $self->{"tax_$i"};
 
   }
-  $amount = $netamount + $total_tax;
+  $amount = $netamount + $bill_tax_total;
 
   # due to $sign amount_$i und tax_$i already have the right sign for acc_trans
   # but reverse sign of totals for writing amounts to ar
