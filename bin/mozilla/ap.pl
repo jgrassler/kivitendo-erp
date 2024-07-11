@@ -772,6 +772,16 @@ sub update {
 
   $main::auth->assert('ap_transactions');
 
+  # Tax keys with VAT owed by the buyer. In these cases, there will be no VAT
+  # on the bill itself. It does not make sense to book the taxes against the
+  # AP account at this point, since they have not been paid, yet.
+
+  my %ap_exempt_taxkeys = (
+    18 => 1,  # Purchases from a different EU country at 7% VAT
+    19 => 1,  # Purchases from a different EU country at 19% VAT
+    94 => 1   # Purchases inside Germany with VAT owed by the buyer
+  );
+
   my $display = shift;
 
   $form->{invtotal} = 0;
@@ -789,12 +799,15 @@ sub update {
     if ($form->{"amount_$i"} || $params{keep_rows_without_amount}) {
       push @a, {};
       $j = $#a;
-      my ($taxkey, $rate) = split(/--/, $form->{"taxchart_$i"});
+      my ($tax_id, $rate) = split(/--/, $form->{"taxchart_$i"});
+      my $selected_tax = SL::DB::Manager::Tax->find_by(id => "$tax_id");
 
       # calculate tax exactly the same way as AP in post_transaction via form->calculate_tax
       my $tmpnetamount;
       ($tmpnetamount,$form->{"tax_$i"}) = $form->calculate_tax($form->{"amount_$i"},$rate,$form->{taxincluded},2);
-      $totaltax += $form->{"tax_$i"};
+      if ( ! $ap_exempt_taxkeys{$selected_tax->taxkey} ) {
+        $totaltax += $form->{"tax_$i"};
+      }
       map { $a[$j]->{$_} = $form->{"${_}_$i"} } @flds;
       $count++;
     }
