@@ -11,6 +11,7 @@ use parent qw(Rose::Object);
 use Text::CSV_XS;
 use XML::Writer;
 use Archive::Zip;
+use File::Copy;
 use File::Temp ();
 use File::Spec ();
 use List::MoreUtils qw(any);
@@ -413,6 +414,56 @@ sub datev_foreign_keys {
   }) for qw(debit_accno credit_accno tax_accno);
 }
 
+sub save_file_attachment {
+    my ($self, $file, $trans_id, $trans_type, $index) = @_;
+
+    my %object_params = (
+      db_file => $file,
+      id => $file->id,
+      loaded => 1,
+    );
+
+    my $file_obj = SL::File::Object->new(%object_params);
+
+    my $filename = $file->file_name;
+    if ( defined($index) ) {
+      my $count = $index + 1;
+      $filename =~ s/.*\.(\w+)$/$trans_id-${index}.$1/;
+    } else {
+      $filename =~ s/.*\.(\w+)$/$trans_id.$1/;
+    }
+    $filename = t8("${trans_type}s") . "/$filename";
+    my ($fh, $tmp_filename) = File::Temp::tempfile();
+    $fh->close();
+    copy($file_obj->get_file(), $tmp_filename);
+    $self->files->{$filename} = $tmp_filename;
+    push @{ $self->tempfiles }, $tmp_filename;
+}
+
+sub export_attachments {
+  my ($self, $trans_id, $trans_type) = @_;
+
+  my @query = {
+    object_id   => $trans_id,
+    object_type => $trans_type,
+  };
+
+  my $sortby = 'itime DESC';
+  my @files = @{ SL::DB::Manager::File->get_all(where => [object_id => $trans_id, object_type => $trans_type], sort_by => $sortby) };
+
+  if ( scalar(@files) == 0 ) { return; }
+
+  if ( scalar(@files) == 1 ) {
+    $self->save_file_attachment($files[0], $trans_id, $trans_type);
+  }
+
+  if ( scalar(@files) > 1 ) {
+    for (my $i=0; $i < scalar(@files); $i++) {
+      $self->save_file_attachment($files[$i], $trans_id, $trans_type, $i);
+    }
+  }
+}
+
 sub do_datev_csv_export {
   my ($self) = @_;
 
@@ -445,6 +496,13 @@ sub do_datev_csv_export {
   }
 
   for my $transaction (@transactions) {
+    my $trans_id = $transaction->[0]->{'trans_id'};
+    my $trans_type = defined($transaction->[0]->{'vendor_id'}) ? 'purchase_invoice' :
+                     defined($transaction->[0]->{'customer_id'}) ? 'invoice' :
+                     'gl_transaction';
+
+    $self->export_attachments($trans_id, $trans_type);
+
     my $is_payment     = any { $_->{link} =~ m{A[PR]_paid} } @{ $transaction };
 
     my ($soll, $haben) = map { $transaction->[$_] } ($transaction->[0]->{amount} > 0 ? (1, 0) : (0, 1));
