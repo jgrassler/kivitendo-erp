@@ -1,4 +1,6 @@
 package SL::Helper::File;
+use SL::MIME;
+use SL::Locale::String qw(t8);
 
 use strict;
 
@@ -68,6 +70,52 @@ sub append_general_pdf_attachments {
 
   return 0;
 }
+
+sub save_to_backend {
+  my $file = shift(@_);
+  my $file_name = shift(@_);
+  my $object_type = shift(@_);
+
+  unless ( $object_type ) { $object_type = 'purchase_invoice' };
+
+  # save file to webdav folder
+  if ($::form->{invnumber} && $::instance_conf->get_webdav_documents) {
+    my $webdav = SL::Webdav->new(
+      type     => 'accounts_payable',
+      number   => $::form->{invnumber},
+    );
+    my $webdav_file = SL::Webdav::File->new(
+      webdav => $webdav,
+      filename => $file_name,
+      data => $file,
+    );
+    eval {
+      $webdav_file->store(file => $file->file_name());
+      1;
+    } or do {
+      SL::Helper::Flash::flash_later('error',
+        t8('Storing file to the WebDAV folder failed: #1', $@));
+    };
+  }
+  if ($::form->{id} && $::instance_conf->get_doc_storage) {
+    eval {
+      SL::File->save(
+        object_id     => $::form->{id},
+        object_type   => $object_type,
+        source        => 'uploaded',
+        mime_type     => SL::MIME->mime_type_from_ext($file_name),
+        file_type     => 'document',
+        file_name     => $file_name,
+        file_contents => $file,
+      );
+      1;
+    } or do {
+      SL::Helper::Flash::flash_later('error',
+        t8('Storing file in the storage backend failed: #1', $@));
+    };
+  }
+}
+
 
 1;
 

@@ -1433,6 +1433,14 @@ sub post_transaction {
       $form->save_history;
     }
 
+    # save uploaded attachment (if any)
+    my $file_uploaded = delete $form->{file};
+    if ( $file_uploaded ) {
+      my $file_name = delete $form->{file_name};
+      SL::Helper::File::save_to_backend($file_uploaded, $file_name, 'gl_transaction');
+    }
+
+
     # Case BankTransaction: update RecordLink and BankTransaction
     if ($form->{callback} =~ /BankTransaction/ && $form->{bt_id}) {
       # set invoice_amount - we only rely on bt_id in form, do all other stuff ui independent
@@ -1474,7 +1482,6 @@ sub post_transaction {
       );
       my $bta = SL::DB::BankTransactionAccTrans->new(%props_acc);
       $bta->save;
-
     }
     1;
   }) or do { die SL::DB->client->error };
