@@ -18,7 +18,7 @@
 <script type="text/javascript" src="js/follow_up.js"></script>
 <script type="text/javascript" src="js/kivi.Draft.js"></script>
 
-<form method="post" name="gl" action="gl.pl" id="form">
+<form method="post" enctype="multipart/form-data" name="gl" action="gl.pl" id="form">
 
 [% FOREACH name IN [ 'id', 'closedto', 'locked', 'storno', 'storno_id', 'previous_id', 'previous_gldate' ] %]
 [% L.hidden_tag(name, $name) %]
@@ -108,6 +108,14 @@
           <td>[% L.checkbox_tag('taxincluded', checked=taxincluded) %]</td>
         </tr>
 
+          <tr>
+            <th>[% 'Upload file' | $T8 %]</th>
+            <td>
+              [% L.input_tag('file', '', type => 'file', accept => '.pdf,.xml', onchange='kivi.GL.update_file_name();') %]
+              [% L.hidden_tag('file_name', '') %]
+              [% L.hidden_tag('file_mimetype', '') %]
+            </td>
+          </tr>
       <tr>
        <td colspan=4>
          [% 'OB Transaction' | $T8 %] [% L.checkbox_tag('ob_transaction' checked=ob_transaction) %]

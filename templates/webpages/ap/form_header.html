@@ -8,7 +8,8 @@
 
 [%- INCLUDE 'common/flash.html' %]
 
-<form method="post" action="[% script | html %]" id="form">
+
+<form method="post" enctype="multipart/form-data" action="[% script | html %]" id="form">
 
 <input type="hidden" name="terms" value="[% terms | html %]">
 
@@ -151,6 +152,16 @@
                 <td align="right"><input name="direct_debit" class="checkbox" type="checkbox" value="1" [% IF direct_debit %]checked[% END %]></td>
                 <th align="left" nowrap>[% 'direct debit' | $T8 %]</th>
               </tr>
+
+              <tr>
+                <th align="right">[% 'Upload file' | $T8 %]</th>
+                <td>
+                  [% L.input_tag('file', '', type => 'file', accept => '.pdf,.xml', onchange='kivi.AP.update_file_name();') %]
+                  [% L.hidden_tag('file_name', '') %]
+                  [% L.hidden_tag('file_mimetype', '') %]
+                </td>
+              </tr>
+
             </table>
           </td>
 
