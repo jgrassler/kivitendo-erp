@@ -8,6 +8,9 @@ sub mime_type_from_ext {
   my $self = shift;
   my $ext  = shift;
 
+  # Normalize extension
+  $ext = lc($ext);
+
   # TODO: Mittels Standardmodulen implementieren.
   my %mime_types = ('ods'  => 'application/vnd.oasis.opendocument.spreadsheet',
                     'odt'  => 'application/vnd.oasis.opendocument.text',
