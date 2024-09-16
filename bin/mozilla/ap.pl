@@ -39,6 +39,7 @@ use List::UtilsBy qw(sort_by);
 use SL::AP;
 use SL::FU;
 use SL::GL;
+use SL::Helper::File;
 use SL::Helper::Flash qw(flash flash_later);
 use SL::IR;
 use SL::IS;
@@ -1027,6 +1028,14 @@ sub post {
       $form->{what_done} = "invoice";
       $form->save_history;
     }
+
+    # save uploaded attachment (if any)
+    my $file_uploaded = delete $form->{file};
+    if ( $file_uploaded ) {
+      my $file_name = delete $form->{file_name};
+      SL::Helper::File::save_to_backend($file_uploaded, $file_name, 'purchase_invoice');
+    }
+
     # save zugferd file
     my $file_name = delete $form->{zugferd_session_file};
     if ($file_name) {

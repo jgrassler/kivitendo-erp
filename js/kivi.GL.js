@@ -28,7 +28,16 @@ namespace('kivi.GL', function(ns) {
       }
     });
   };
+
+  this.update_file_name = function() {
+    let file = document.getElementById("file").files[0];
+    if (file) {
+      document.getElementById("file_name").value = file.name;
+    }
+  };
+
 });
+
 
 $(function() {
   kivi.File.doc_tab_init('gl_tabs', 'ui-tabs-docs', $('#id').val(), 'gl_transaction');
