@@ -636,12 +636,20 @@ sub config {
     };
   }
 
+  my %style_names = (
+    "lx-office-erp.css" => "Lx-Office",
+    "kivitendo.css" => "Kivitendo (normale Schriftgröße)",
+    "kivitendo-l.css" => "Kivitendo (Schriftgröße L)",
+    "kivitendo-xl.css" => "Kivitendo (Schriftgröße XL)",
+    "kivitendo-xxl.css" => "Kivitendo (Schriftgröße XXL)"
+  );
+
   $form->{STYLESHEETS} = [];
-  foreach my $item (qw(lx-office-erp.css kivitendo.css)) {
+  foreach my $item ( sort keys %style_names ) {
     push @{ $form->{STYLESHEETS} }, {
-      'name'     => $item,
-      'value'    => $item,
-      'selected' => $item eq $myconfig{stylesheet},
+      'name'      => $style_names{$item},
+      'value'     => $item,
+      'selected'  => $item eq $myconfig{stylesheet},
     };
   }
 

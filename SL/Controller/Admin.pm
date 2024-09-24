@@ -493,19 +493,19 @@ sub action_lock_system {
 # initializers
 #
 
-sub init_db_cfg            { $::lx_office_conf{'authentication/database'}                                                    }
-sub init_is_locked         { SL::System::InstallationLock->is_locked                                                         }
-sub init_client            { SL::DB::Manager::AuthClient->find_by(id => (($::form->{client} || {})->{id} || $::form->{id}))  }
-sub init_user              { SL::DB::AuthUser  ->new(id => ($::form->{id} || ($::form->{user}    || {})->{id}))->load        }
-sub init_group             { SL::DB::AuthGroup ->new(id => ($::form->{id} || ($::form->{group}   || {})->{id}))->load        }
-sub init_printer           { SL::DB::Printer   ->new(id => ($::form->{id} || ($::form->{printer} || {})->{id}))->load        }
-sub init_all_clients       { SL::DB::Manager::AuthClient->get_all_sorted                                                     }
-sub init_all_users         { SL::DB::Manager::AuthUser  ->get_all_sorted                                                     }
-sub init_all_groups        { SL::DB::Manager::AuthGroup ->get_all_sorted                                                     }
-sub init_all_printers      { SL::DB::Manager::Printer   ->get_all_sorted                                                     }
-sub init_all_dateformats   { [ qw(mm/dd/yy dd/mm/yy dd.mm.yy yyyy-mm-dd)      ]                                              }
-sub init_all_numberformats { [ '1,000.00', '1000.00', '1.000,00', '1000,00', "1'000.00" ]                                    }
-sub init_all_stylesheets   { [ qw(lx-office-erp.css Mobile.css kivitendo.css) ]                                              }
+sub init_db_cfg            { $::lx_office_conf{'authentication/database'}                                                          }
+sub init_is_locked         { SL::System::InstallationLock->is_locked                                                               }
+sub init_client            { SL::DB::Manager::AuthClient->find_by(id => (($::form->{client} || {})->{id} || $::form->{id}))        }
+sub init_user              { SL::DB::AuthUser  ->new(id => ($::form->{id} || ($::form->{user}    || {})->{id}))->load              }
+sub init_group             { SL::DB::AuthGroup ->new(id => ($::form->{id} || ($::form->{group}   || {})->{id}))->load              }
+sub init_printer           { SL::DB::Printer   ->new(id => ($::form->{id} || ($::form->{printer} || {})->{id}))->load              }
+sub init_all_clients       { SL::DB::Manager::AuthClient->get_all_sorted                                                           }
+sub init_all_users         { SL::DB::Manager::AuthUser  ->get_all_sorted                                                           }
+sub init_all_groups        { SL::DB::Manager::AuthGroup ->get_all_sorted                                                           }
+sub init_all_printers      { SL::DB::Manager::Printer   ->get_all_sorted                                                           }
+sub init_all_dateformats   { [ qw(mm/dd/yy dd/mm/yy dd.mm.yy yyyy-mm-dd)      ]                                                    }
+sub init_all_numberformats { [ '1,000.00', '1000.00', '1.000,00', '1000,00', "1'000.00" ]                                          }
+sub init_all_stylesheets   { [ qw(lx-office-erp.css Mobile.css kivitendo.css kivitendo-l.css kivitendo-xl.css kivitendo-xxl.css) ] }
 sub init_all_dbsources             { [ sort User->dbsources($::form)                               ] }
 sub init_all_used_dbsources        { { map { (join(':', $_->dbhost || 'localhost', $_->dbport || 5432, $_->dbname) => $_->name) } @{ $_[0]->all_clients }  } }
 sub init_all_accounting_methods    { [ { id => 'accrual',   name => t8('Accrual accounting')  }, { id => 'cash',     name => t8('Cash accounting')       } ] }
