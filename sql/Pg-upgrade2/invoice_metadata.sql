@@ -1,5 +1,6 @@
 -- @tag: invoice_metadat
 -- @description: Add vendor_partno and a foreign key for referencing detail transactions to invoice
+-- @depends: release_3_6_1
 
 ALTER TABLE invoice ADD COLUMN acc_trans_id integer;
 ALTER TABLE invoice ADD COLUMN vendor_partno text;
