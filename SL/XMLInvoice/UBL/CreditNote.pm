@@ -1,24 +1,24 @@
-package SL::XMLInvoice::UBL;
+package SL::XMLInvoice::UBL::CreditNote;
 
 use strict;
 use warnings;
 
 use parent qw(SL::XMLInvoice::Base);
 
-use constant ITEMS_XPATH => '//cac:InvoiceLine';
+use constant ITEMS_XPATH => '//cac:CreditNoteLine';
 
 =head1 NAME
 
-SL::XMLInvoice::UBL - XML parser for Universal Business Language invoices
+SL::XMLInvoice::UBL::CreditNote - XML parser for Universal Business Language credit notes
 
 =head1 DESCRIPTION
 
-C<SL::XMLInvoice::UBL> parses XML invoices in Oasis Universal Business
-Language format and makes their data available through the interface defined
-by C<SL::XMLInvoice>. Refer to L<SL::XMLInvoice> for a detailed description of
-that interface.
+C<SL::XMLInvoice::UBL::CreditNote> parses XML credit notes in Oasis Universal
+Business Language format and makes their data available through the interface
+defined by C<SL::XMLInvoice>. Refer to L<SL::XMLInvoice> for a detailed
+description of that interface.
 
-See L<http://docs.oasis-open.org/ubl/os-UBL-2.1/UBL-2.1.html#T-INVOICE> for
+See L<https://docs.oasis-open.org/ubl/os-UBL-2.1/UBL-2.1.html#T-CREDIT-NOTE> for
 that format's specification.
 
 =head1 OPERATION
@@ -55,7 +55,7 @@ returned by the C<items()> method.
 =cut
 
 sub supported {
-  my @supported = ( "Oasis Universal Business Language (UBL) invoice version 2 (urn:oasis:names:specification:ubl:schema:xsd:Invoice-2)" );
+  my @supported = ( "Oasis Universal Business Language (UBL) credit note version 2 (urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2)" );
   return @supported;
 }
 
@@ -65,7 +65,7 @@ sub check_signature {
   my $rootnode = $dom->documentElement;
 
   foreach my $attr ( $rootnode->attributes ) {
-    if ( $attr->getData =~ m/urn:oasis:names:specification:ubl:schema:xsd:Invoice-2/ ) {
+    if ( $attr->getData =~ m/urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2/ ) {
       return 1;
       }
     }
@@ -77,14 +77,14 @@ sub check_signature {
 sub scalar_xpaths {
   return {
     currency => '//cbc:DocumentCurrencyCode',
-    direct_debit => '//cbc:PaymentMeansCode[@listID="UN/ECE 4461"]',
+    direct_debit => '//cbc:PaymentMeansCode',
     duedate => '//cbc:DueDate',
     gross_total => '//cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount',
     iban => '//cac:PayeeFinancialAccount/cbc:ID',
     invnumber => '//cbc:ID',
     net_total => '//cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount',
     transdate => '//cbc:IssueDate',
-    type => '//cbc:InvoiceTypeCode',
+    type => '//cbc:CreditNoteTypeCode',
     taxnumber => '//cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID',
     ustid => '//cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID',
     vendor_name => '//cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name',
@@ -161,7 +161,7 @@ sub parse_xml {
 
   # Convert payment code metadata field to Boolean
   # See https://service.unece.org/trade/untdid/d16b/tred/tred4461.htm for other valid codes.
-  ${$self->{_metadata}}{'direct_debit'} = ${$self->{_metadata}}{'direct_debit'} == 59 ? 1 : 0;
+  ${$self->{_metadata}}{'direct_debit'} = ${$self->{_metadata}}{'sepa_transfer'} == 59 ? 1 : 0;
 
   # UBL does not have a specified way of designating the tax scheme, so we'll
   # have to guess whether it's a tax ID or VAT ID (not using

@@ -7,7 +7,8 @@ use List::Util qw(first);
 use XML::LibXML;
 
 use SL::Locale::String qw(t8);
-use SL::XMLInvoice::UBL;
+use SL::XMLInvoice::UBL::Invoice;
+use SL::XMLInvoice::UBL::CreditNote;
 use SL::XMLInvoice::CrossIndustryInvoice;
 use SL::XMLInvoice::CrossIndustryDocument;
 
@@ -18,7 +19,8 @@ use constant RES_UNKNOWN_ROOT_NODE_TYPE => 2;
 our @document_modules = qw(
   SL::XMLInvoice::CrossIndustryDocument
   SL::XMLInvoice::CrossIndustryInvoice
-  SL::XMLInvoice::UBL
+  SL::XMLInvoice::UBL::CreditNote
+  SL::XMLInvoice::UBL::Invoice
 );
 
 =head1 NAME
